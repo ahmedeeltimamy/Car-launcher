@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>شاشة السيارة</title>
+<style>
+:root{--bg:#0d1215;--panel:#162027;--panel2:#1d2b34;--line:#2a3b46;--tx:#eaf3f6;--mut:#8aa0aa;--ice:#7fd0e6;--amb:#f2b24c;--on:#0d1215;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#e9eff2;--panel:#fff;--panel2:#dde7ec;--line:#c3d1d9;--tx:#122028;--mut:#587280;--ice:#0a7a96;--amb:#b06d00;--on:#fff}}
+:root[data-theme="light"]{--bg:#e9eff2;--panel:#fff;--panel2:#dde7ec;--line:#c3d1d9;--tx:#122028;--mut:#587280;--ice:#0a7a96;--amb:#b06d00;--on:#fff}
+:root[data-theme="dark"]{--bg:#0d1215;--panel:#162027;--panel2:#1d2b34;--line:#2a3b46;--tx:#eaf3f6;--mut:#8aa0aa;--ice:#7fd0e6;--amb:#f2b24c;--on:#0d1215}
+*{box-sizing:inherit;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font-family:Tajawal,system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden;-webkit-user-select:none;user-select:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible{outline:3px solid var(--ice);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;color:var(--mut);font-size:15px}
+.top b{color:var(--tx);font-size:20px}
+main{flex:1;min-height:0;padding:0 16px 8px}
+.view{display:none;height:100%;gap:14px}
+.view.on{display:grid}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;min-height:0;overflow:hidden}
+#home{grid-template-columns:1fr 1.5fr 1fr}
+.speed{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px}
+.speed .n{font-size:clamp(72px,16vh,130px);font-weight:800;line-height:1}
+.speed .u{color:var(--mut)}
+.bar{width:100%;height:10px;border-radius:5px;background:var(--panel2);overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;width:62%;background:var(--ice);transition:width .4s}
+.stats{display:flex;gap:18px;margin-top:14px;color:var(--mut);font-size:15px}
+.stats b{display:block;color:var(--tx);font-size:20px}
+.map{position:relative;padding:0}
+.map svg{width:100%;height:100%;display:block}
+.nav{position:absolute;inset:auto 14px 14px 14px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.nav b{font-size:22px}.nav span{color:var(--mut);font-size:15px}
+.media{display:flex;flex-direction:column;justify-content:space-between}
+.art{aspect-ratio:1;max-height:42%;border-radius:18px;background:linear-gradient(135deg,var(--ice),var(--panel2));margin:0 auto}
+.t{text-align:center}.t b{font-size:22px;display:block}.t span{color:var(--mut)}
+.ctl{display:flex;justify-content:center;gap:14px;align-items:center}
+.rb{width:56px;height:56px;border-radius:50%;background:var(--panel2);font-size:22px}
+.rb.big{width:70px;height:70px;background:var(--ice);color:var(--on);font-size:28px}
+.prog{height:6px;border-radius:3px;background:var(--panel2);overflow:hidden}.prog i{display:block;height:100%;width:0;background:var(--ice)}
+#climate{grid-template-columns:1.2fr 1fr}
+.temp{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.temp .n{font-size:clamp(64px,15vh,120px);font-weight:800;line-height:1}
+.row{display:flex;gap:14px;align-items:center}
+.stepper{width:84px;height:84px;border-radius:50%;background:var(--panel2);font-size:38px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
+.tile{background:var(--panel2);border:2px solid transparent;border-radius:18px;padding:16px;text-align:right;min-height:86px;font-size:18px;font-weight:500}
+.tile small{display:block;color:var(--mut);font-weight:400;margin-top:4px}
+.tile[aria-pressed="true"]{border-color:var(--ice)}
+.tile[aria-pressed="true"] small{color:var(--ice)}
+#mediaV{grid-template-columns:1fr}
+.list{display:flex;flex-direction:column;gap:10px;overflow:auto}
+.list button{display:flex;justify-content:space-between;background:var(--panel2);border-radius:14px;padding:16px;font-size:18px;text-align:right}
+.list button[aria-current="true"]{outline:2px solid var(--ice)}
+.dock{display:flex;justify-content:space-around;gap:8px;padding:8px 16px 14px}
+.dock button{flex:1;padding:16px 0;border-radius:16px;background:var(--panel);border:1px solid var(--line);font-size:17px;font-weight:700}
+.dock button[aria-selected="true"]{background:var(--ice);color:var(--on);border-color:var(--ice)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="top"><span id="date"></span><b id="clock">--:--</b><span>٢٤°م خارجاً</span></div>
+<main>
+<section class="view on" id="home" role="tabpanel">
+ <div class="card speed">
+  <div class="n" id="spd">62</div><div class="u">كم/س</div>
+  <div class="bar"><i id="spdbar"></i></div>
+  <div class="stats"><div><b>٤١٠</b>كم متبقية</div><div><b>٨٢٪</b>البطارية</div></div>
+ </div>
+ <div class="card map">
+  <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-label="خريطة التنقل">
+   <rect width="400" height="300" fill="var(--panel2)"/>
+   <g stroke="var(--line)" stroke-width="14" fill="none" stroke-linecap="round"><path d="M-10 60H410M-10 190H410M70 -10V310M260 -10V310"/></g>
+   <path d="M330 300V190H70V60" stroke="var(--ice)" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+   <circle cx="70" cy="60" r="12" fill="var(--amb)"/>
+   <path d="M330 262l-12 20h24z" fill="var(--tx)"/>
+  </svg>
+  <div class="nav"><div><b>الرياض – طريق الملك فهد</b><br><span>بعد ٣٫٢ كم اتجه يساراً</span></div><div><b>٢٦ د</b><br><span>١٤:٢٠ وصول</span></div></div>
+ </div>
+ <div class="card media" id="mini">
+  <div class="art"></div>
+  <div class="t"><b class="tt">ليالي الصيف</b><span class="ta">مجموعة الطريق</span></div>
+  <div class="prog"><i class="pg"></i></div>
+  <div class="ctl"><button class="rb" data-a="prev" aria-label="السابق">⏮</button><button class="rb big" data-a="play" aria-label="تشغيل">▶</button><button class="rb" data-a="next" aria-label="التالي">⏭</button></div>
+ </div>
+</section>
+<section class="view" id="climate" role="tabpanel">
+ <div class="card temp">
+  <span style="color:var(--mut)">درجة حرارة المقصورة</span>
+  <div class="n"><span id="tmp">22</span>°</div>
+  <div class="row"><button class="stepper" id="down" aria-label="خفض">−</button><button class="stepper" id="up" aria-label="رفع">+</button></div>
+ </div>
+ <div class="card tiles">
+  <button class="tile" data-t="ac" aria-pressed="true">التكييف<small>يعمل</small></button>
+  <button class="tile" data-t="fan" aria-pressed="false">المروحة<small id="fanv">٢</small></button>
+  <button class="tile" data-t="seat" aria-pressed="false">تدفئة المقعد<small>متوقف</small></button>
+  <button class="tile" data-t="defrost" aria-pressed="false">إزالة الضباب<small>متوقف</small></button>
+  <button class="tile" data-t="recirc" aria-pressed="false">تدوير الهواء<small>متوقف</small></button>
+  <button class="tile" data-t="auto" aria-pressed="true">تلقائي<small>يعمل</small></button>
+ </div>
+</section>
+<section class="view" id="mediaV" role="tabpanel">
+ <div class="card list" id="list"></div>
+</section>
+</main>
+<nav class="dock" role="tablist" aria-label="التنقل">
+ <button role="tab" aria-selected="true" data-v="home">الرئيسية</button>
+ <button role="tab" aria-selected="false" data-v="climate">المناخ</button>
+ <button role="tab" aria-selected="false" data-v="mediaV">الوسائط</button>
+</nav>
+<script>
+var $=function(s,r){return (r||document).querySelector(s)},$$=function(s){return [].slice.call(document.querySelectorAll(s))};
+function tick(){var d=new Date();$("#clock").textContent=d.toLocaleTimeString("ar",{hour:"2-digit",minute:"2-digit"});$("#date").textContent=d.toLocaleDateString("ar",{weekday:"long",day:"numeric",month:"long"})}
+tick();setInterval(tick,30000);
+// tabs
+$$(".dock button").forEach(function(b){b.onclick=function(){
+ $$(".dock button").forEach(function(x){x.setAttribute("aria-selected",x===b)});
+ $$(".view").forEach(function(v){v.classList.toggle("on",v.id===b.dataset.v)});}});
+// speed demo
+var s=62;setInterval(function(){s=Math.max(40,Math.min(110,s+Math.round(Math.random()*6-3)));$("#spd").textContent=s;$("#spdbar").style.width=Math.round(s/140*100)+"%"},1500);
+// media
+var songs=[["ليالي الصيف","مجموعة الطريق"],["صباح الصحراء","عود وناي"],["طريق طويل","فرقة المسافر"],["نسيم البحر","ألحان هادئة"]],i=0,playing=false,p=0;
+function render(){$(".tt").textContent=songs[i][0];$(".ta").textContent=songs[i][1];$(".big").textContent=playing?"⏸":"▶";$(".big").setAttribute("aria-label",playing?"إيقاف مؤقت":"تشغيل");
+ $$("#list button").forEach(function(b,k){b.setAttribute("aria-current",k===i)})}
+$("#list").innerHTML=songs.map(function(x,k){return '<button data-k="'+k+'"><span>'+x[0]+'</span><span style="color:var(--mut)">'+x[1]+'</span></button>'}).join("");
+$("#list").onclick=function(e){var b=e.target.closest("button");if(b){i=+b.dataset.k;p=0;playing=true;render()}};
+$("#mini").onclick=function(e){var b=e.target.closest("[data-a]");if(!b)return;var a=b.dataset.a;
+ if(a==="play")playing=!playing;else{i=(i+(a==="next"?1:songs.length-1))%songs.length;p=0}render()};
+setInterval(function(){if(playing){p=(p+1)%100;$(".pg").style.width=p+"%"}},1000);
+render();
+// climate
+var t=22;function setT(v){t=Math.max(16,Math.min(30,v));$("#tmp").textContent=t}
+$("#up").onclick=function(){setT(t+1)};$("#down").onclick=function(){setT(t-1)};
+var fan=2;
+$$(".tile").forEach(function(b){b.onclick=function(){
+ if(b.dataset.t==="fan"){fan=fan%5+1;$("#fanv").textContent=fan;b.setAttribute("aria-pressed",true);return}
+ var on=b.getAttribute("aria-pressed")!=="true";b.setAttribute("aria-pressed",on);b.querySelector("small").textContent=on?"يعمل":"متوقف"}});
+</script>
+</body>
+</html>
